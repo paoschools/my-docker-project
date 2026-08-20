@@ -42,7 +42,7 @@ my-docker-project/
 │
 └── portainer/
     └── data/
-
+```
 # mqtt/config/mosquitto.conf
 ```bash
 listener 1883
