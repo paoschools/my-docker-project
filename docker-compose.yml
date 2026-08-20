@@ -1,0 +1,113 @@
+services:
+
+  # =========================
+  # Node-RED
+  # =========================
+  node-red:
+    image: nodered/node-red:latest
+    container_name: node-red
+    restart: unless-stopped
+    ports:
+      - "1880:1880"
+    volumes:
+      - ./node-red/data:/data
+    depends_on:
+      - mysql
+      - mqtt
+    networks:
+      - app-network
+
+
+  # =========================
+  # MySQL
+  # =========================
+  mysql:
+    image: mysql:8.4
+    container_name: mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: mydatabase
+      MYSQL_USER: myuser
+      MYSQL_PASSWORD: mypassword
+      TZ: Asia/Bangkok
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./mysql/data:/var/lib/mysql
+    networks:
+      - app-network
+
+
+  # =========================
+  # phpMyAdmin
+  # =========================
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: phpmyadmin
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      MYSQL_ROOT_PASSWORD: rootpassword
+      TZ: Asia/Bangkok
+    ports:
+      - "8080:80"
+    depends_on:
+      - mysql
+    networks:
+      - app-network
+
+
+  # =========================
+  # Apache Web Server
+  # =========================
+  apache:
+    image: php:8.3-apache
+    container_name: apache
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./apache/html:/var/www/html
+    depends_on:
+      - mysql
+    networks:
+      - app-network
+
+
+  # =========================
+  # MQTT - Mosquitto
+  # =========================
+  mqtt:
+    image: eclipse-mosquitto:2
+    container_name: mqtt
+    restart: unless-stopped
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mqtt/config:/mosquitto/config
+      - ./mqtt/data:/mosquitto/data
+      - ./mqtt/log:/mosquitto/log
+    networks:
+      - app-network
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+      - "9443:9443"
+    volumes:
+      - ./portainer/data:/data
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - app-network
+
+# =========================
+# Network
+# =========================
+networks:
+  app-network:
+    driver: bridge
